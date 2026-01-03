@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>body{font-family:'Poppins',sans-serif;}</style>
+</head>
+<body class="bg-gray-50 text-gray-800 min-h-screen pb-20">
+
+    <nav class="bg-white border-b px-4 py-4 sticky top-0 z-50 shadow-sm flex justify-between items-center">
+        <h1 class="font-bold text-lg text-indigo-700 flex items-center gap-2">
+            <i class="fas fa-user-shield"></i> <span id="userDisplay">Admin</span>
+        </h1>
+        <button onclick="logout()" class="text-xs font-bold text-red-500 bg-red-50 px-3 py-1 rounded-full border border-red-100">Logout</button>
+    </nav>
+
+    <div class="container mx-auto px-4 mt-6 max-w-3xl">
+        
+        <!-- Magic Link Card -->
+        <div class="bg-gradient-to-r from-indigo-700 to-purple-700 rounded-2xl p-5 text-white mb-6 shadow-xl">
+            <h2 class="font-bold text-lg mb-1">Your Public Link 🚀</h2>
+            <div class="flex flex-col sm:flex-row gap-2 mt-3 bg-white/10 p-2 rounded-xl border border-white/20">
+                <input type="text" id="finalLink" readonly class="bg-transparent text-white text-xs w-full outline-none px-2 truncate" placeholder="Update to generate...">
+                <div class="flex gap-2 shrink-0">
+                    <button onclick="generateLink()" class="bg-white text-indigo-700 px-3 py-2 rounded-lg text-xs font-bold hover:bg-gray-100">Update</button>
+                    <button onclick="copyLink()" class="bg-indigo-900 text-white px-3 py-2 rounded-lg text-xs font-bold hover:bg-black">Copy</button>
+                    <a id="previewBtn" href="#" target="_blank" class="bg-indigo-500/50 text-white px-3 py-2 rounded-lg text-xs font-bold">View</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-6">
+            
+            <!-- PROFILE -->
+            <div class="space-y-6">
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
+                    <h3 class="font-bold text-gray-700 mb-4 text-sm uppercase tracking-wider border-b pb-2">Profile</h3>
+                    <div class="space-y-3">
+                        <input type="text" id="pTitle" placeholder="Display Name" class="w-full bg-gray-50 border border-gray-200 rounded-lg p-2.5 text-sm outline-none focus:border-indigo-500">
+                        <textarea id="pDesc" rows="2" placeholder="Bio" class="w-full bg-gray-50 border border-gray-200 rounded-lg p-2.5 text-sm outline-none focus:border-indigo-500"></textarea>
+                        
+                        <!-- Profile Image Upload -->
+                        <div>
+                            <label class="text-xs font-bold text-gray-500">Logo (From Gallery)</label>
+                            <div class="flex items-center gap-3 mt-1">
+                                <img id="imgPreview" src="https://via.placeholder.com/60" class="w-14 h-14 rounded-full object-cover border bg-gray-100">
+                                <label class="bg-indigo-50 text-indigo-600 px-3 py-2 rounded-lg text-xs font-bold cursor-pointer hover:bg-indigo-100">
+                                    <i class="fas fa-upload mr-1"></i> Upload
+                                    <input type="file" accept="image/*" class="hidden" onchange="compressImage(this, 'logo')">
+                                </label>
+                            </div>
+                            <!-- Hidden input to store base64 string -->
+                            <input type="hidden" id="pAvatar"> 
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TOOLS -->
+            <div class="space-y-6">
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
+                    <h3 class="font-bold text-gray-700 mb-4 text-sm uppercase tracking-wider border-b pb-2">Add Tool</h3>
+                    <form id="addForm" class="space-y-3">
+                        <input type="text" id="tName" placeholder="Tool Name" class="w-full bg-gray-50 border border-gray-200 rounded-lg p-2.5 text-sm" required>
+                        <input type="url" id="tUrl" placeholder="Link (https://...)" class="w-full bg-gray-50 border border-gray-200 rounded-lg p-2.5 text-sm" required>
+                        
+                        <!-- Tool Image Upload -->
+                        <div>
+                            <label class="text-xs font-bold text-gray-500 block mb-1">Icon (From Gallery)</label>
+                            <div class="flex items-center gap-2">
+                                <label class="flex-1 bg-gray-50 border border-dashed border-gray-300 rounded-lg p-2 text-xs text-center cursor-pointer hover:bg-gray-100 text-gray-500">
+                                    <span id="toolFileName"><i class="fas fa-image"></i> Select Image</span>
+                                    <input type="file" accept="image/*" class="hidden" onchange="compressImage(this, 'tool')">
+                                </label>
+                                <!-- Hidden input for tool image -->
+                                <input type="hidden" id="tempToolImg"> 
+                            </div>
+                        </div>
+
+                        <button type="submit" class="w-full bg-gray-900 text-white py-2.5 rounded-xl font-bold text-sm hover:bg-black transition shadow-lg">Add Tool</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-8">
+            <h3 class="font-bold text-gray-700 mb-4 text-sm uppercase tracking-wider ml-1">Tools List</h3>
+            <div id="toolList" class="space-y-3 pb-10"></div>
+        </div>
+    </div>
+
+    <script>
+        // AUTH CHECK
+        const currentUser = localStorage.getItem('currentUser');
+        if(!currentUser) window.location.href = 'index.html';
+        document.getElementById('userDisplay').innerText = currentUser;
+
+        let data = { title: currentUser, desc: "My Toolkit", avatar: "", links: [] };
+
+        // Load Data
+        const savedData = localStorage.getItem(`data_${currentUser}`);
+        if(savedData) {
+            data = JSON.parse(savedData);
+            document.getElementById('pTitle').value = data.title;
+            document.getElementById('pDesc').value = data.desc;
+            document.getElementById('pAvatar').value = data.avatar;
+            if(data.avatar) document.getElementById('imgPreview').src = data.avatar;
+            renderList();
+        }
+
+        // --- IMAGE COMPRESSION LOGIC (Crucial for No-Backend) ---
+        window.compressImage = (input, type) => {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    const img = new Image();
+                    img.src = e.target.result;
+                    img.onload = function () {
+                        // Create Canvas
+                        const canvas = document.createElement('canvas');
+                        const ctx = canvas.getContext('2d');
+                        
+                        // Set size (Small enough for URL, Big enough to see)
+                        const maxWidth = type === 'logo' ? 150 : 80; 
+                        const scale = maxWidth / img.width;
+                        canvas.width = maxWidth;
+                        canvas.height = img.height * scale;
+
+                        // Draw compressed image
+                        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                        
+                        // Convert to String (JPEG 70% Quality)
+                        const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+
+                        if(type === 'logo') {
+                            document.getElementById('imgPreview').src = dataUrl;
+                            document.getElementById('pAvatar').value = dataUrl;
+                        } else {
+                            document.getElementById('toolFileName').innerText = "Image Selected";
+                            document.getElementById('toolFileName').classList.add("text-green-600");
+                            document.getElementById('tempToolImg').value = dataUrl;
+                        }
+                    }
+                }
+                reader.readAsDataURL(input.files[0]);
+            }
+        };
+
+        // Add Tool
+        document.getElementById('addForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const newItem = {
+                name: document.getElementById('tName').value,
+                url: document.getElementById('tUrl').value,
+                img: document.getElementById('tempToolImg').value // Uses the base64 string
+            };
+            data.links.push(newItem);
+            saveData();
+            
+            // Reset Form
+            e.target.reset();
+            document.getElementById('tempToolImg').value = "";
+            document.getElementById('toolFileName').innerHTML = '<i class="fas fa-image"></i> Select Image';
+            document.getElementById('toolFileName').classList.remove("text-green-600");
+        });
+
+        function renderList() {
+            const list = document.getElementById('toolList');
+            list.innerHTML = '';
+            data.links.forEach((item, index) => {
+                const div = document.createElement('div');
+                div.className = 'bg-white p-3 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between';
+                div.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <img src="${item.img || 'https://via.placeholder.com/40'}" class="w-10 h-10 rounded-lg object-cover bg-gray-50 border">
+                        <div>
+                            <h4 class="font-bold text-sm text-gray-800">${item.name}</h4>
+                            <p class="text-[10px] text-gray-400 truncate w-32">${item.url}</p>
+                        </div>
+                    </div>
+                    <button onclick="removeTool(${index})" class="text-red-400 hover:text-red-600 p-2"><i class="fas fa-trash"></i></button>
+                `;
+                list.appendChild(div);
+            });
+        }
+
+        window.removeTool = (index) => {
+            data.links.splice(index, 1);
+            saveData();
+        }
+
+        function saveData() {
+            data.title = document.getElementById('pTitle').value;
+            data.desc = document.getElementById('pDesc').value;
+            data.avatar = document.getElementById('pAvatar').value;
+            localStorage.setItem(`data_${currentUser}`, JSON.stringify(data));
+            renderList();
+        }
+
+        window.generateLink = () => {
+            saveData();
+            const jsonString = JSON.stringify(data);
+            const encoded = btoa(encodeURIComponent(jsonString));
+            const url = `${window.location.origin}${window.location.pathname.replace('admin.html', 'view.html')}?d=${encoded}`;
+            document.getElementById('finalLink').value = url;
+            document.getElementById('previewBtn').href = url;
+            alert("Link Updated! Share this link.");
+        };
+
+        window.copyLink = () => {
+            const copyText = document.getElementById("finalLink");
+            if(!copyText.value) return alert("Update first!");
+            copyText.select();
+            navigator.clipboard.writeText(copyText.value);
+            alert("Copied!");
+        };
+
+        window.logout = () => { localStorage.removeItem('currentUser'); window.location.href = 'index.html'; };
+    </script>
+</body>
+</html>
