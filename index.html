@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Toolkit Login</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>body{font-family:'Poppins',sans-serif;}</style>
+</head>
+<body class="bg-[#0f172a] text-white h-screen flex items-center justify-center overflow-hidden relative">
+
+    <div class="absolute w-96 h-96 bg-purple-600 rounded-full blur-[100px] top-0 left-0 opacity-40"></div>
+    <div class="absolute w-96 h-96 bg-blue-600 rounded-full blur-[100px] bottom-0 right-0 opacity-40"></div>
+
+    <div class="bg-white/5 backdrop-blur-xl border border-white/10 p-8 rounded-2xl w-full max-w-md shadow-2xl relative z-10 mx-4">
+        
+        <div class="text-center mb-8">
+            <h1 class="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-400">Toolkit Admin</h1>
+            <p class="text-gray-400 text-sm mt-2">Secure Local Login</p>
+        </div>
+
+        <form id="loginForm" class="space-y-4">
+            <div>
+                <label class="text-xs text-gray-400 ml-1 uppercase font-bold">Page Name</label>
+                <input type="text" id="pageName" placeholder="e.g. Ammar" class="w-full bg-black/30 border border-gray-600 rounded-xl py-3 px-4 outline-none focus:border-blue-500 transition text-sm" required>
+            </div>
+            <div>
+                <label class="text-xs text-gray-400 ml-1 uppercase font-bold">Set/Enter Admin Password</label>
+                <input type="password" id="pagePass" placeholder="Secret Code" class="w-full bg-black/30 border border-gray-600 rounded-xl py-3 px-4 outline-none focus:border-blue-500 transition text-sm" required>
+            </div>
+            
+            <button type="submit" class="w-full bg-gradient-to-r from-blue-600 to-purple-600 py-3 rounded-xl font-bold shadow-lg hover:scale-[1.02] transition-transform">
+                Access Dashboard
+            </button>
+        </form>
+
+        <p class="mt-6 text-center text-[10px] text-gray-500">
+            Note: Password is saved locally on this device only.
+        </p>
+    </div>
+
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const name = document.getElementById('pageName').value.trim();
+            const pass = document.getElementById('pagePass').value.trim();
+
+            if(name && pass) {
+                // Check if user already exists in local storage
+                const savedData = localStorage.getItem(`auth_${name}`);
+                
+                if (savedData) {
+                    // Verify Password
+                    if (savedData === pass) {
+                        localStorage.setItem('currentUser', name);
+                        window.location.href = 'admin.html';
+                    } else {
+                        alert("Wrong Password! (Since this is offline, use the password you first used).");
+                    }
+                } else {
+                    // New User - Set Password
+                    localStorage.setItem(`auth_${name}`, pass);
+                    localStorage.setItem('currentUser', name);
+                    window.location.href = 'admin.html';
+                }
+            }
+        });
+    </script>
+</body>
+</html>
